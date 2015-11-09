@@ -62,7 +62,7 @@ public class WorkingNote {
 
     private NoteSettingChangedListener mNoteSettingStatusListener;
 
-    public static final String[] DATA_PROJECTION = new String[] {
+    public static final String[] DATA_PROJECTION = new String[]{
             DataColumns.ID,
             DataColumns.CONTENT,
             DataColumns.MIME_TYPE,
@@ -72,7 +72,7 @@ public class WorkingNote {
             DataColumns.DATA4,
     };
 
-    public static final String[] NOTE_PROJECTION = new String[] {
+    public static final String[] NOTE_PROJECTION = new String[]{
             NoteColumns.PARENT_ID,
             NoteColumns.ALERTED_DATE,
             NoteColumns.BG_COLOR_ID,
@@ -148,8 +148,8 @@ public class WorkingNote {
 
     private void loadNoteData() {
         Cursor cursor = mContext.getContentResolver().query(Notes.CONTENT_DATA_URI, DATA_PROJECTION,
-                DataColumns.NOTE_ID + "=?", new String[] {
-                    String.valueOf(mNoteId)
+                DataColumns.NOTE_ID + "=?", new String[]{
+                        String.valueOf(mNoteId)
                 }, null);
 
         if (cursor != null) {
@@ -175,7 +175,7 @@ public class WorkingNote {
     }
 
     public static WorkingNote createEmptyNote(Context context, long folderId, int widgetId,
-            int widgetType, int defaultBgColorId) {
+                                              int widgetType, int defaultBgColorId) {
         WorkingNote note = new WorkingNote(context, folderId);
         note.setBgColorId(defaultBgColorId);
         note.setWidgetId(widgetId);
@@ -243,7 +243,7 @@ public class WorkingNote {
         mIsDeleted = mark;
         if (mWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID
                 && mWidgetType != Notes.TYPE_WIDGET_INVALIDE && mNoteSettingStatusListener != null) {
-                mNoteSettingStatusListener.onWidgetChanged();
+            mNoteSettingStatusListener.onWidgetChanged();
         }
     }
 
@@ -360,6 +360,7 @@ public class WorkingNote {
 
         /**
          * Call when switch between check list mode and normal mode
+         *
          * @param oldMode is previous mode before change
          * @param newMode is new mode
          */

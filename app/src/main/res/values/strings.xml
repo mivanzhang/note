@@ -128,7 +128,9 @@
     <string name="datetime_dialog_cancel">cancel</string>
     <string name="sd_not_availble">sd card not availble</string>
     <string name="share_notes">share notes</string>
-
+    <string name="notes">notes</string>
+    <string name="menu_recover">recover</string>
+    <string name="menu_backup">backup</string>
 
     <plurals name="search_results_title">
          <item quantity="one"><xliff:g id="number" example="1">%1$s</xliff:g> result for \"<xliff:g id="search" example="???">%2$s</xliff:g>\"</item>

@@ -75,7 +75,6 @@ import net.micode.notes.widget.NoteWidgetProvider_4x;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.HashSet;
@@ -97,8 +96,6 @@ public class NotesListActivity extends Activity implements OnClickListener, OnIt
     private enum ListEditState {
         NOTE_LIST, SUB_FOLDER, CALL_RECORD_FOLDER
     }
-
-    ;
 
     private ListEditState mState;
 
@@ -215,7 +212,7 @@ public class NotesListActivity extends Activity implements OnClickListener, OnIt
             @Override
             public void run() {
                 byte[] readBuffer = new byte[SIZE];
-                StringBuffer content = new StringBuffer();
+
                 String result[] = null;
                 String backUpDirectory = Environment.getExternalStorageDirectory().getAbsolutePath() + getString(R.string.file_path);
                 File[] backupFiles = new File(backUpDirectory).listFiles(new FilenameFilter() {
@@ -227,31 +224,48 @@ public class NotesListActivity extends Activity implements OnClickListener, OnIt
                         return false;
                     }
                 });
-                BufferedInputStream bi;
+//                int                 我       突发奇想       随笔      便签      问题
+                String[] resouceName = {"我", "随笔","突发奇想", "便签", "问题"};
+                int[] resouceId = {R.raw.a1, R.raw.a2, R.raw.a3, R.raw.a5, R.raw.a4};
                 try {
-                    if ((backupFiles.length > 0)) {
-                        bi = new BufferedInputStream(new FileInputStream(backupFiles[0]));
-                    } else {
-                        bi = new BufferedInputStream(getResources().openRawResource(R.raw.notes_20151107));
-                    }
-                    while (bi.read(readBuffer, 0, readBuffer.length) != -1) {
-                        content.append(new String(readBuffer, "UTF-8"));
-                    }
-                    bi.close();
-                    content.append(readBuffer);
-                    result = content.toString().split("(\r\n){2,}");
-                    for (int i = result.length - 1; i >= 0; i--) {
-                        WorkingNote note = WorkingNote.createEmptyNote(NotesListActivity.this, mCurrentFolderId,
-                                AppWidgetManager.INVALID_APPWIDGET_ID, Notes.TYPE_WIDGET_INVALIDE,
-                                ResourceParser.RED);
-                        note.setWorkingText(result[i]);
-                        note.saveNote();
+//                    if ((backupFiles.length > 0)) {
+//                        bi = new BufferedInputStream(new FileInputStream(backupFiles[0]));
+//                    } else {
+//                        bi = new BufferedInputStream(getResources().openRawResource(R.raw.小米便签));
+//                    }
+                    int folderID = 1;
+                    for (int i = 0; i < resouceId.length; i++) {
+                        StringBuffer content = new StringBuffer();
+                        createdFoldlerID(resouceName[i]);
+                        BufferedInputStream bi = new BufferedInputStream(getResources().openRawResource(resouceId[i]));
+                        while (bi.read(readBuffer, 0, readBuffer.length) != -1) {
+                            content.append(new String(readBuffer, "UTF-8"));
+                        }
+                        bi.close();
+                        content.append(readBuffer);
+                        result = content.toString().split("(\r\n){2,}");
+                        for (int j = result.length - 1; j >= 0; j--) {
+                            WorkingNote note = WorkingNote.createEmptyNote(NotesListActivity.this, folderID,
+                                    AppWidgetManager.INVALID_APPWIDGET_ID, Notes.TYPE_WIDGET_INVALIDE,
+                                    ResourceParser.RED);
+                            note.setWorkingText(result[j]);
+                            note.saveNote();
+                        }
+                        folderID+=result.length+1;
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         }.start();
+    }
+
+    private void createdFoldlerID(String name) {
+
+        ContentValues values = new ContentValues();
+        values.put(NoteColumns.SNIPPET, name);
+        values.put(NoteColumns.TYPE, Notes.TYPE_FOLDER);
+        mContentResolver.insert(Notes.CONTENT_NOTE_URI, values);
     }
 
     @Override
@@ -722,13 +736,13 @@ public class NotesListActivity extends Activity implements OnClickListener, OnIt
                 mCurrentFolderId = Notes.ID_ROOT_FOLDER;
                 mState = ListEditState.NOTE_LIST;
                 startAsyncNotesListQuery();
-                mTitleBar.setVisibility(View.GONE);
+//                mTitleBar.setVisibility(View.GONE);
                 break;
             case CALL_RECORD_FOLDER:
                 mCurrentFolderId = Notes.ID_ROOT_FOLDER;
                 mState = ListEditState.NOTE_LIST;
                 mAddNewNote.setVisibility(View.VISIBLE);
-                mTitleBar.setVisibility(View.GONE);
+//                mTitleBar.setVisibility(View.GONE);
                 startAsyncNotesListQuery();
                 break;
             case NOTE_LIST:
@@ -820,13 +834,25 @@ public class NotesListActivity extends Activity implements OnClickListener, OnIt
             menu.findItem(R.id.menu_sync).setTitle(
                     GTaskSyncService.isSyncing() ? R.string.menu_sync_cancel : R.string.menu_sync);
         } else if (mState == ListEditState.SUB_FOLDER) {
-            getMenuInflater().inflate(R.menu.sub_folder, menu);
+//            getMenuInflater().inflate(R.menu.sub_folder, menu);
+            getMenuInflater().inflate(R.menu.note_list, menu);
         } else if (mState == ListEditState.CALL_RECORD_FOLDER) {
             getMenuInflater().inflate(R.menu.call_record_folder, menu);
         } else {
             Log.e(TAG, "Wrong state:" + mState);
         }
         return true;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.note_list, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onMenuItemSelected(int featureId, MenuItem item) {
+        return super.onMenuItemSelected(featureId, item);
     }
 
     @Override
@@ -874,6 +900,7 @@ public class NotesListActivity extends Activity implements OnClickListener, OnIt
         }
         return true;
     }
+
 
     private void recover() {
 

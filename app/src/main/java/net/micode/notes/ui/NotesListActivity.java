@@ -62,6 +62,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import net.micode.notes.R;
+import net.micode.notes.common.Const;
 import net.micode.notes.data.Notes;
 import net.micode.notes.data.Notes.NoteColumns;
 import net.micode.notes.gtask.remote.GTaskSyncService;
@@ -142,7 +143,6 @@ public class NotesListActivity extends Activity implements OnClickListener, OnIt
         super.onCreate(savedInstanceState);
         setContentView(R.layout.note_list);
         initResources();
-
         /**
          * Insert an introduction when user firstly use this application
          */
@@ -225,7 +225,7 @@ public class NotesListActivity extends Activity implements OnClickListener, OnIt
                     }
                 });
 //                int                 我       突发奇想       随笔      便签      问题
-                String[] resouceName = {"我", "随笔","突发奇想", "便签", "问题"};
+                String[] resouceName = {"我", "随笔", "突发奇想", "便签", "问题"};
                 int[] resouceId = {R.raw.a1, R.raw.a2, R.raw.a3, R.raw.a5, R.raw.a4};
                 try {
 //                    if ((backupFiles.length > 0)) {
@@ -251,7 +251,7 @@ public class NotesListActivity extends Activity implements OnClickListener, OnIt
                             note.setWorkingText(result[j]);
                             note.saveNote();
                         }
-                        folderID+=result.length+1;
+                        folderID += result.length + 1;
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -312,6 +312,7 @@ public class NotesListActivity extends Activity implements OnClickListener, OnIt
                 mMoveMenu.setVisible(true);
                 mMoveMenu.setOnMenuItemClickListener(this);
             }
+
             mActionMode = mode;
             mNotesListAdapter.setChoiceMode(true);
             mNotesListView.setLongClickable(false);
@@ -895,10 +896,24 @@ public class NotesListActivity extends Activity implements OnClickListener, OnIt
             case R.id.menu_recover:
                 recover();
                 break;
+            case R.id.menu_lock:
+                lock();
+                break;
             default:
                 break;
         }
         return true;
+    }
+
+    private void lock() {
+        SharedPreferences sharedPreferences = getSharedPreferences(Const.PASSPROT_PERFERENCE_NAME,MODE_PRIVATE);
+        Intent intent = new Intent(this, PassportActivity.class);
+        if(sharedPreferences.getBoolean(Const.PASSPROT_STATUS,false)) {
+            intent.putExtra(Const.PASSPROT_INFO, Const.PASSPROT_RESET);
+        }else{
+            intent.putExtra(Const.PASSPROT_INFO, Const.SET_PASSPROT);
+        }
+        startActivity(intent);
     }
 
 

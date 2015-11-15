@@ -130,8 +130,14 @@
     <string name="share_notes">share notes</string>
     <string name="notes">notes</string>
     <string name="menu_recover">recover</string>
+    <string name="menu_lock">set lock</string>
     <string name="menu_backup">backup</string>
-
+    <string name="note_password_input_1">Input passport </string>
+    <string name="note_password_input_2">Confirm passport</string>
+    <string name="ok">ok</string>
+    <string name="passport_different">passport different</string>
+    <string name="passport_different_old">passport different with older one</string>
+    <string name="passport_wrong">wrong password</string>
     <plurals name="search_results_title">
          <item quantity="one"><xliff:g id="number" example="1">%1$s</xliff:g> result for \"<xliff:g id="search" example="???">%2$s</xliff:g>\"</item>
         <!-- Case of 0 or 2 or more results. -->

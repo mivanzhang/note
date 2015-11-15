@@ -43,4 +43,7 @@
     <item
         android:id="@+id/menu_recover"
         android:title="@string/menu_recover"/>
+    <item
+        android:id="@+id/menu_lock"
+        android:title="@string/menu_lcok"/>
 </menu>

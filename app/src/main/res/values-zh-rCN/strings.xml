@@ -45,6 +45,7 @@
     <string name="menu_delete">删除</string>
     <string name="menu_backup">备份</string>
     <string name="menu_recover">恢复</string>
+    <string name="menu_lcok">设置密码</string>
     <string name="menu_move">移动到文件夹</string>
     <string name="menu_select_title">选中了 %d 项</string>
     <string name="menu_select_none">没有选中项，操作无效</string>
@@ -124,6 +125,12 @@
     <string name="sd_not_availble">sd卡不可用</string>
     <string name="share_notes">分享我的笔记</string>
     <string name="notes">便签</string>
+    <string name="note_password_input_1">输入密码</string>
+    <string name="note_password_input_2">再次输入密码</string>
+    <string name="ok">确定</string>
+    <string name="passport_different">输入密码不一致</string>
+    <string name="passport_different_old">输入密码与以前密码不一致</string>
+    <string name="passport_wrong">密码输入错误</string>
 
     <plurals name="search_results_title">
         <item quantity="other"><xliff:g id="NUMBER">%1$s</xliff:g> 条符合“<xliff:g id="SEARCH">%2$s</xliff:g>”的搜索结果</item>

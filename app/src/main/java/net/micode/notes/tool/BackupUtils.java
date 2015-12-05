@@ -239,7 +239,6 @@ public class BackupUtils {
                             String phoneNumber = dataCursor.getString(DATA_COLUMN_PHONE_NUMBER);
                             long callDate = dataCursor.getLong(DATA_COLUMN_CALL_DATE);
                             String location = dataCursor.getString(DATA_COLUMN_CONTENT);
-
                             if (!TextUtils.isEmpty(phoneNumber)) {
                                 ps.println(String.format(getFormat(FORMAT_NOTE_CONTENT),
                                         phoneNumber));

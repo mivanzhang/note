@@ -71,8 +71,10 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import me.dawson.applock.core.BaseActivity;
 
-public class NoteEditActivity extends Activity implements OnClickListener,
+
+public class NoteEditActivity extends BaseActivity implements OnClickListener,
         NoteSettingChangedListener, OnTextViewChangeListener {
     private class HeadViewHolder {
         public TextView tvModified;

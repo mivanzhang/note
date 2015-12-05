@@ -21,9 +21,12 @@
         android:id="@+id/menu_new_folder"
         android:title="@string/menu_create_folder"/>
 
-    <item
-        android:id="@+id/menu_export_text"
-        android:title="@string/menu_export_text"/>
+    <!--<item-->
+        <!--android:id="@+id/menu_export_text"-->
+        <!--android:title="@string/menu_export_text"/>-->
+    <!--<item-->
+        <!--android:id="@+id/menu_export_xml"-->
+        <!--android:title="@string/menu_export_xml"/>-->
 
     <item
         android:id="@+id/menu_sync"

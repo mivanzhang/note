@@ -62,7 +62,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import net.micode.notes.R;
-import net.micode.notes.common.Const;
 import net.micode.notes.data.Notes;
 import net.micode.notes.data.Notes.NoteColumns;
 import net.micode.notes.gtask.remote.GTaskSyncService;
@@ -76,11 +75,18 @@ import net.micode.notes.widget.NoteWidgetProvider_4x;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.HashSet;
 
-public class NotesListActivity extends Activity implements OnClickListener, OnItemLongClickListener {
+import me.dawson.applock.core.AppLock;
+import me.dawson.applock.core.AppLockActivity;
+import me.dawson.applock.core.BaseActivity;
+import me.dawson.applock.core.LockManager;
+
+public class NotesListActivity extends BaseActivity implements OnClickListener, OnItemLongClickListener {
     private static final int FOLDER_NOTE_LIST_QUERY_TOKEN = 0;
 
     private static final int FOLDER_LIST_QUERY_TOKEN = 1;
@@ -224,15 +230,11 @@ public class NotesListActivity extends Activity implements OnClickListener, OnIt
                         return false;
                     }
                 });
+
 //                int                 我       突发奇想       随笔      便签      问题
                 String[] resouceName = {"我", "随笔", "突发奇想", "便签", "问题"};
                 int[] resouceId = {R.raw.a1, R.raw.a2, R.raw.a3, R.raw.a5, R.raw.a4};
                 try {
-//                    if ((backupFiles.length > 0)) {
-//                        bi = new BufferedInputStream(new FileInputStream(backupFiles[0]));
-//                    } else {
-//                        bi = new BufferedInputStream(getResources().openRawResource(R.raw.小米便签));
-//                    }
                     int folderID = 1;
                     for (int i = 0; i < resouceId.length; i++) {
                         StringBuffer content = new StringBuffer();
@@ -260,13 +262,128 @@ public class NotesListActivity extends Activity implements OnClickListener, OnIt
         }.start();
     }
 
-    private void createdFoldlerID(String name) {
+    private void importNoteFromTxt() {
+        new Thread() {
+            @Override
+            public void run() {
+                byte[] readBuffer = new byte[SIZE];
+                String result[] = null;
+                String backUpDirectory = Environment.getExternalStorageDirectory().getAbsolutePath() + getString(R.string.file_path);
+                File[] backupFiles = new File(backUpDirectory).listFiles(new FilenameFilter() {
+                    @Override
+                    public boolean accept(File dir, String filename) {
+                        if (filename.endsWith(".txt")) {
+                            return true;
+                        }
+                        return false;
+                    }
+                });
+                if (backupFiles.length > 0) {
+                    try {
+                        startRecover(backupFiles[0]);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    Toast.makeText(NotesListActivity.this, NotesListActivity.this.getString(R.string.no_backup_file) + backUpDirectory, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+        }.start();
+    }
 
+    public void startRecover(File file) throws FileNotFoundException {
+        String folderName = new String();
+        byte[] readBuffer = new byte[SIZE];
+        StringBuffer content = new StringBuffer();
+        BufferedInputStream bi = new BufferedInputStream(new FileInputStream(file));
+        try {
+            while (bi.read(readBuffer, 0, readBuffer.length) != -1) {
+                content.append(new String(readBuffer, "UTF-8"));
+            }
+            bi.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            content.append(readBuffer);
+            int folderID = 2;
+            String cata[] = content.toString().split("----------------");
+            for (int cout = cata.length - 1; cout > 0; cout--) {
+                if (cout % 2 == 1) {
+                    folderName = cata[cout].trim();
+                    if (!BackupUtils.DEFAULT.equals(folderName)) {
+                        createdFoldlerID(cata[cout].trim());
+                    }
+                    continue;
+                }
+                String result[] = cata[cout].toString().split("(\r\n){2,}");
+                if (BackupUtils.DEFAULT.equals(folderName)) {
+                    for (int j = result.length - 1; j >= 0; j--) {
+                        WorkingNote note = WorkingNote.createEmptyNote(this, Notes.ID_ROOT_FOLDER,
+                                AppWidgetManager.INVALID_APPWIDGET_ID, Notes.TYPE_WIDGET_INVALIDE,
+                                ResourceParser.YELLOW);
+                        note.setWorkingText(result[j].trim());
+                        note.saveNote();
+                    }
+                    continue;
+                }
+                for (int j = result.length - 1; j >= 0; j--) {
+                    WorkingNote note = WorkingNote.createEmptyNote(NotesListActivity.this, folderID,
+                            AppWidgetManager.INVALID_APPWIDGET_ID, Notes.TYPE_WIDGET_INVALIDE,
+                            ResourceParser.YELLOW);
+                    note.setWorkingText(result[j].trim());
+                    note.saveNote();
+
+                }
+                folderID += result.length + 1;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void createdFoldlerID(String name) {
         ContentValues values = new ContentValues();
         values.put(NoteColumns.SNIPPET, name);
         values.put(NoteColumns.TYPE, Notes.TYPE_FOLDER);
         mContentResolver.insert(Notes.CONTENT_NOTE_URI, values);
     }
+//    private void insertNote(){
+//        String[] resouceName = {"我", "随笔", "突发奇想", "便签", "问题"};
+//        int[] resouceId = {R.raw.a1, R.raw.a2, R.raw.a3, R.raw.a5, R.raw.a4};
+//        try {
+////                    if ((backupFiles.length > 0)) {
+////                        bi = new BufferedInputStream(new FileInputStream(backupFiles[0]));
+////                    } else {
+////                        bi = new BufferedInputStream(getResources().openRawResource(R.raw.小米便签));
+////                    }
+//            int folderID = 1;
+//            for (int i = 0; i < resouceId.length; i++) {
+//                StringBuffer content = new StringBuffer();
+//                createdFoldlerID(resouceName[i]);
+//                BufferedInputStream bi = new BufferedInputStream(getResources().openRawResource(resouceId[i]));
+//                while (bi.read(readBuffer, 0, readBuffer.length) != -1) {
+//                    content.append(new String(readBuffer, "UTF-8"));
+//                }
+//                bi.close();
+//                content.append(readBuffer);
+//                result = content.toString().split("(\r\n){2,}");
+//                for (int j = result.length - 1; j >= 0; j--) {
+//                    WorkingNote note = WorkingNote.createEmptyNote(NotesListActivity.this, folderID,
+//                            AppWidgetManager.INVALID_APPWIDGET_ID, Notes.TYPE_WIDGET_INVALIDE,
+//                            ResourceParser.RED);
+//                    note.setWorkingText(result[j]);
+//                    note.saveNote();
+//                }
+//                folderID += result.length + 1;
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
+
 
     @Override
     protected void onStart() {
@@ -863,10 +980,14 @@ public class NotesListActivity extends Activity implements OnClickListener, OnIt
                 showCreateOrModifyFolderDialog(true);
                 break;
             }
-            case R.id.menu_export_text: {
-                exportNoteToText();
-                break;
-            }
+//            case R.id.menu_export_text: {
+//                exportNote(false);
+//                break;
+//            }
+//            case R.id.menu_export_xml: {
+//                exportNote(true);
+//                break;
+//            }
             case R.id.menu_sync: {
                 if (isSyncMode()) {
                     if (TextUtils.equals(item.getTitle(), getString(R.string.menu_sync))) {
@@ -906,20 +1027,63 @@ public class NotesListActivity extends Activity implements OnClickListener, OnIt
     }
 
     private void lock() {
-        SharedPreferences sharedPreferences = getSharedPreferences(Const.PASSPROT_PERFERENCE_NAME,MODE_PRIVATE);
-        Intent intent = new Intent(this, PassportActivity.class);
-        if(sharedPreferences.getBoolean(Const.PASSPROT_STATUS,false)) {
-            intent.putExtra(Const.PASSPROT_INFO, Const.PASSPROT_RESET);
-        }else{
-            intent.putExtra(Const.PASSPROT_INFO, Const.SET_PASSPROT);
-        }
-        startActivity(intent);
+        new AlertDialog.Builder(this).setTitle(getString(R.string.passport)).setItems(
+                new String[]{getString(R.string.reset_passport), getString(R.string.modify_passport)}, passportListener).show();
     }
 
+    android.content.DialogInterface.OnClickListener passportListener = new android.content.DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            if (0 == which) {
+                int type = LockManager.getInstance().getAppLock().isPasscodeSet() ? AppLock.DISABLE_PASSLOCK
+                        : AppLock.ENABLE_PASSLOCK;
+                Intent intent = new Intent(NotesListActivity.this, AppLockActivity.class);
+                intent.putExtra(AppLock.TYPE, type);
+                startActivity(intent);
+            } else if (1 == which) {
+                Intent intent = new Intent(NotesListActivity.this, AppLockActivity.class);
+                intent.putExtra(AppLock.TYPE, AppLock.CHANGE_PASSWORD);
+                intent.putExtra(AppLock.MESSAGE,
+                        getString(me.dawson.applock.R.string.enter_old_passcode));
+                startActivity(intent);
+            }
+
+        }
+    };
+
+    android.content.DialogInterface.OnClickListener backupListener = new android.content.DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            if (0 == which) {
+                exportNote(false);
+            } else if (1 == which) {
+                exportNote(true);
+            }
+
+        }
+    };
+    android.content.DialogInterface.OnClickListener recoverListener = new android.content.DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            if (0 == which) {
+                importNoteFromTxt();
+            } else if (1 == which) {
+                importNoteFromXML();
+            }
+        }
+
+    };
+
+    private void importNoteFromXML() {
+
+    }
 
     private void recover() {
 
-        initMyDiary();
+//        initMyDiary();
+
+        new AlertDialog.Builder(this).setTitle(getString(R.string.backup)).setItems(
+                new String[]{getString(R.string.menu_import_text), getString(R.string.menu_import_xml)}, recoverListener).show();
     }
 
     private void backUp() {
@@ -936,6 +1100,9 @@ public class NotesListActivity extends Activity implements OnClickListener, OnIt
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //        }
+        new AlertDialog.Builder(this).setTitle(getString(R.string.backup)).setItems(
+                new String[]{getString(R.string.menu_export_text), getString(R.string.menu_export_xml)}, backupListener).show();
+
     }
 
     @Override
@@ -944,12 +1111,15 @@ public class NotesListActivity extends Activity implements OnClickListener, OnIt
         return true;
     }
 
-    private void exportNoteToText() {
+    private void exportNote(final boolean isXML) {
         final BackupUtils backup = BackupUtils.getInstance(NotesListActivity.this);
         new AsyncTask<Void, Void, Integer>() {
 
             @Override
             protected Integer doInBackground(Void... unused) {
+                if (isXML) {
+                    backup.exportToXMl();
+                }
                 return backup.exportToText();
             }
 

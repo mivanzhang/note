@@ -38,10 +38,16 @@
     <!-- Text export file information -->
     <string name="file_path">/MIUI/notes/</string>
     <string name="file_name_txt_format">notes_%s.txt</string>
+    <string name="file_name_xml_format">notes_%s.xml</string>
     <!-- notes list string -->
     <string name="format_folder_files_count">(%d)</string>
     <string name="menu_create_folder">New Folder</string>
     <string name="menu_export_text">Export text</string>
+    <string name="menu_export_xml">Export xml</string>
+
+    <string name="menu_import_text">Import text</string>
+    <string name="menu_import_xml">Import xml</string>
+
     <string name="menu_sync">Sync</string>
     <string name="menu_sync_cancel">Cancel syncing</string>
     <string name="menu_setting">Settings</string>
@@ -138,6 +144,13 @@
     <string name="passport_different">passport different</string>
     <string name="passport_different_old">passport different with older one</string>
     <string name="passport_wrong">wrong password</string>
+    <string name="passport">password</string>
+    <string name="backup">backup</string>
+    <string name="reset_passport">enable/disable  passport</string>
+    <string name="modify_passport">modify  passport</string>
+    <string name="no_backup_file">no  backup  file in  </string>
+
+
     <plurals name="search_results_title">
          <item quantity="one"><xliff:g id="number" example="1">%1$s</xliff:g> result for \"<xliff:g id="search" example="???">%2$s</xliff:g>\"</item>
         <!-- Case of 0 or 2 or more results. -->

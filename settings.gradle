@@ -1,1 +1,4 @@
 include ':app'
+
+include ':AppLock'
+project(':AppLock').projectDir = new File('../AppLock/library')

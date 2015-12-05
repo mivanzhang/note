@@ -10,7 +10,6 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import net.micode.notes.R;
-import net.micode.notes.application.BaseApplication;
 import net.micode.notes.common.Const;
 
 import java.security.MessageDigest;
@@ -54,7 +53,6 @@ public class PassportActivity extends Activity {
             switch (mode) {
                 case Const.INNPUT_PASSPROT:
                     if(getMD5Code(passprot.getText().toString().trim()).equals(sharedPreferences.getString(Const.PASSPROT,""))){
-                        ((BaseApplication)getApplication()).setLcokStatus(false);
                         finish();
                     }else
                         Toast.makeText(PassportActivity.this,R.string.passport_wrong,Toast.LENGTH_LONG).show();
@@ -63,7 +61,6 @@ public class PassportActivity extends Activity {
                     if (passprot.getText().toString().trim().equals(passprotRepeat.getText().toString().trim())) {
                         sharedPreferences.edit().putString(Const.PASSPROT, getMD5Code(passprot.getText().toString().trim())).apply();
                         sharedPreferences.edit().putBoolean(Const.PASSPROT_STATUS, true).apply();
-                        ((BaseApplication)getApplication()).setLcokStatus(false);
                         finish();
                     }
                     else
@@ -72,8 +69,6 @@ public class PassportActivity extends Activity {
                 case Const.PASSPROT_RESET:
                     setRepeatView(View.GONE);
                     if(getMD5Code(passprot.getText().toString().trim()).equals(sharedPreferences.getString(Const.PASSPROT,""))){
-                        ((BaseApplication)getApplication()).setLcokStatus(false);
-
                         Intent intent=new Intent(PassportActivity.this,PassportActivity.class);
                         intent.putExtra(Const.PASSPROT_INFO, Const.PASSPROT_RESET);
                         startActivity(intent);

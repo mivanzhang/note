@@ -36,6 +36,7 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.util.Xml;
 import android.view.ActionMode;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -65,6 +66,8 @@ import net.micode.notes.R;
 import net.micode.notes.data.Notes;
 import net.micode.notes.data.Notes.NoteColumns;
 import net.micode.notes.gtask.remote.GTaskSyncService;
+import net.micode.notes.model.BackupFolderInfo;
+import net.micode.notes.model.BackupNoteInfo;
 import net.micode.notes.model.WorkingNote;
 import net.micode.notes.tool.BackupUtils;
 import net.micode.notes.tool.DataUtils;
@@ -73,12 +76,15 @@ import net.micode.notes.ui.NotesListAdapter.AppWidgetAttribute;
 import net.micode.notes.widget.NoteWidgetProvider_2x;
 import net.micode.notes.widget.NoteWidgetProvider_4x;
 
+import org.xmlpull.v1.XmlPullParser;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashSet;
 
 import me.dawson.applock.core.AppLock;
@@ -213,50 +219,105 @@ public class NotesListActivity extends BaseActivity implements OnClickListener, 
         }
     }
 
-    private void initMyDiary() {
+    public void parseXML(InputStream xml) throws Exception {
+        BackupNoteInfo noteInfo = new BackupNoteInfo();
+        BackupFolderInfo folderInfo = new BackupFolderInfo();
+        XmlPullParser pullParser = Xml.newPullParser();
+        pullParser.setInput(xml, "UTF-8"); //为Pull解释器设置要解析的XML数据        
+        int event = pullParser.getEventType();
+        while (event != XmlPullParser.END_DOCUMENT) {
+
+            switch (event) {
+
+                case XmlPullParser.START_DOCUMENT:
+
+                    break;
+                case XmlPullParser.START_TAG:
+//                    folderInfo = new BackupFolderInfo();
+//                    noteInfo = new BackupNoteInfo();
+                    //folder match
+                    switch (pullParser.getName()) {
+                        case BackupUtils.FOLDER:
+                            folderInfo = new BackupFolderInfo();
+                            break;
+                        case NoteColumns.ID:
+                            folderInfo.setId(pullParser.getText());
+                            break;
+                        case BackupUtils.FOLDER_NAME:
+                            folderInfo.setFoldername(pullParser.getText());
+                            break;
+                        case BackupUtils.NOTE:
+                            noteInfo = new BackupNoteInfo();
+                            break;
+                        case BackupUtils.CREATE_TIME:
+                            noteInfo.setCreateTime(pullParser.getText());
+                            break;
+                        case BackupUtils.FIX_TIME:
+                            noteInfo.setFixTime(pullParser.getText());
+                            break;
+                        case BackupUtils.BGCOLORID:
+                            noteInfo.setBgcolorId(pullParser.getText());
+                            break;
+                        case BackupUtils.CONTENT:
+                            noteInfo.setContent(pullParser.getText());
+                            break;
+                        case BackupUtils.FOLDERID:
+                            noteInfo.setFolderId(pullParser.getText());
+                            break;
+                        default:
+                            break;
+                    }
+
+                case XmlPullParser.END_TAG:
+                    switch (pullParser.getName()) {
+                        case BackupUtils.FOLDER:
+                            createdFoldlerID(folderInfo.getFoldername(), folderInfo.getId());
+                            break;
+
+                        case BackupUtils.NOTE:
+                            WorkingNote note = WorkingNote.createEmptyNote(this, Integer.valueOf(noteInfo.getFolderId()),
+                                    AppWidgetManager.INVALID_APPWIDGET_ID, Notes.TYPE_WIDGET_INVALIDE,
+                                    Integer.valueOf(noteInfo.getBgcolorId()));
+                            note.setWorkingText(noteInfo.getContent());
+                            note.setmModifiedDate(Long.valueOf(noteInfo.getFixTime()));
+                            note.saveNote();
+                            break;
+                        default:
+                            break;
+                    }
+                default:
+                    break;
+
+            }
+
+            event = pullParser.next();
+        }
+
+    }
+
+    private void importNoteFromXML() {
         new Thread() {
             @Override
             public void run() {
-                byte[] readBuffer = new byte[SIZE];
-
-                String result[] = null;
                 String backUpDirectory = Environment.getExternalStorageDirectory().getAbsolutePath() + getString(R.string.file_path);
                 File[] backupFiles = new File(backUpDirectory).listFiles(new FilenameFilter() {
                     @Override
                     public boolean accept(File dir, String filename) {
-                        if (filename.endsWith(".txt")) {
+                        if (filename.endsWith(".xml")) {
                             return true;
                         }
                         return false;
                     }
                 });
-
-//                int                 我       突发奇想       随笔      便签      问题
-                String[] resouceName = {"我", "随笔", "突发奇想", "便签", "问题"};
-                int[] resouceId = {R.raw.a1, R.raw.a2, R.raw.a3, R.raw.a5, R.raw.a4};
-                try {
-                    int folderID = 1;
-                    for (int i = 0; i < resouceId.length; i++) {
-                        StringBuffer content = new StringBuffer();
-                        createdFoldlerID(resouceName[i]);
-                        BufferedInputStream bi = new BufferedInputStream(getResources().openRawResource(resouceId[i]));
-                        while (bi.read(readBuffer, 0, readBuffer.length) != -1) {
-                            content.append(new String(readBuffer, "UTF-8"));
-                        }
-                        bi.close();
-                        content.append(readBuffer);
-                        result = content.toString().split("(\r\n){2,}");
-                        for (int j = result.length - 1; j >= 0; j--) {
-                            WorkingNote note = WorkingNote.createEmptyNote(NotesListActivity.this, folderID,
-                                    AppWidgetManager.INVALID_APPWIDGET_ID, Notes.TYPE_WIDGET_INVALIDE,
-                                    ResourceParser.RED);
-                            note.setWorkingText(result[j]);
-                            note.saveNote();
-                        }
-                        folderID += result.length + 1;
+                if (backupFiles.length > 0) {
+                    try {
+                        parseXML(new FileInputStream(backupFiles[backupFiles.length - 1]));
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } else {
+                    Toast.makeText(NotesListActivity.this, NotesListActivity.this.getString(R.string.no_backup_file) + backUpDirectory, Toast.LENGTH_SHORT).show();
+                    return;
                 }
             }
         }.start();
@@ -307,13 +368,14 @@ public class NotesListActivity extends BaseActivity implements OnClickListener, 
         }
         try {
             content.append(readBuffer);
+//            int folderID =  BackupUtils.getInstance(this).getNoteTotalNumbers();
             int folderID = 2;
             String cata[] = content.toString().split("----------------");
-            for (int cout = cata.length - 1; cout > 0; cout--) {
+            for (int cout = 1; cout < cata.length; cout++) {
                 if (cout % 2 == 1) {
                     folderName = cata[cout].trim();
                     if (!BackupUtils.DEFAULT.equals(folderName)) {
-                        createdFoldlerID(cata[cout].trim());
+                        createdFoldlerID(cata[cout].trim(), String.valueOf(folderID));
                     }
                     continue;
                 }
@@ -338,52 +400,19 @@ public class NotesListActivity extends BaseActivity implements OnClickListener, 
                 }
                 folderID += result.length + 1;
             }
-
+//            Toast.makeText(NotesListActivity.this, NotesListActivity.this.getString(R.string.rec]]) , Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void createdFoldlerID(String name) {
+    private void createdFoldlerID(String name, String folderID) {
         ContentValues values = new ContentValues();
         values.put(NoteColumns.SNIPPET, name);
+        values.put(NoteColumns.ID, folderID);
         values.put(NoteColumns.TYPE, Notes.TYPE_FOLDER);
         mContentResolver.insert(Notes.CONTENT_NOTE_URI, values);
     }
-//    private void insertNote(){
-//        String[] resouceName = {"我", "随笔", "突发奇想", "便签", "问题"};
-//        int[] resouceId = {R.raw.a1, R.raw.a2, R.raw.a3, R.raw.a5, R.raw.a4};
-//        try {
-////                    if ((backupFiles.length > 0)) {
-////                        bi = new BufferedInputStream(new FileInputStream(backupFiles[0]));
-////                    } else {
-////                        bi = new BufferedInputStream(getResources().openRawResource(R.raw.小米便签));
-////                    }
-//            int folderID = 1;
-//            for (int i = 0; i < resouceId.length; i++) {
-//                StringBuffer content = new StringBuffer();
-//                createdFoldlerID(resouceName[i]);
-//                BufferedInputStream bi = new BufferedInputStream(getResources().openRawResource(resouceId[i]));
-//                while (bi.read(readBuffer, 0, readBuffer.length) != -1) {
-//                    content.append(new String(readBuffer, "UTF-8"));
-//                }
-//                bi.close();
-//                content.append(readBuffer);
-//                result = content.toString().split("(\r\n){2,}");
-//                for (int j = result.length - 1; j >= 0; j--) {
-//                    WorkingNote note = WorkingNote.createEmptyNote(NotesListActivity.this, folderID,
-//                            AppWidgetManager.INVALID_APPWIDGET_ID, Notes.TYPE_WIDGET_INVALIDE,
-//                            ResourceParser.RED);
-//                    note.setWorkingText(result[j]);
-//                    note.saveNote();
-//                }
-//                folderID += result.length + 1;
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
-
 
     @Override
     protected void onStart() {
@@ -980,14 +1009,6 @@ public class NotesListActivity extends BaseActivity implements OnClickListener, 
                 showCreateOrModifyFolderDialog(true);
                 break;
             }
-//            case R.id.menu_export_text: {
-//                exportNote(false);
-//                break;
-//            }
-//            case R.id.menu_export_xml: {
-//                exportNote(true);
-//                break;
-//            }
             case R.id.menu_sync: {
                 if (isSyncMode()) {
                     if (TextUtils.equals(item.getTitle(), getString(R.string.menu_sync))) {
@@ -1074,32 +1095,13 @@ public class NotesListActivity extends BaseActivity implements OnClickListener, 
 
     };
 
-    private void importNoteFromXML() {
-
-    }
 
     private void recover() {
-
-//        initMyDiary();
-
         new AlertDialog.Builder(this).setTitle(getString(R.string.backup)).setItems(
                 new String[]{getString(R.string.menu_import_text), getString(R.string.menu_import_xml)}, recoverListener).show();
     }
 
     private void backUp() {
-//        try {
-//            BufferedOutputStream bo = new BufferedOutputStream(new FileOutputStream("/Users/zhangmeng/Desktop/self_code/test.txt"));
-//            content.append(readBuffer);
-//            String result[] = content.toString().split("(\r\n){2,}");
-//            for (int i = 0; i < 30; i++) {
-//                System.out.println("line number:  " + i + "    " + result[i]);
-//                bo.write(result[i].getBytes());
-//            }
-//            bo.flush();
-//            bo.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
         new AlertDialog.Builder(this).setTitle(getString(R.string.backup)).setItems(
                 new String[]{getString(R.string.menu_export_text), getString(R.string.menu_export_xml)}, backupListener).show();
 

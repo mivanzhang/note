@@ -366,4 +366,12 @@ public class WorkingNote {
          */
         void onCheckListModeChanged(int oldMode, int newMode);
     }
+
+    public void setmModifiedDate(long mModifiedDate) {
+        this.mModifiedDate = mModifiedDate;
+    }
+
+    public void setmFolderId(long mFolderId) {
+        this.mFolderId = mFolderId;
+    }
 }

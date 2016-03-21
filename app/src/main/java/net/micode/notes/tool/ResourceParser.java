@@ -37,7 +37,7 @@ public class ResourceParser {
     public static final int TEXT_LARGE       = 2;
     public static final int TEXT_SUPER       = 3;
 
-    public static final int BG_DEFAULT_FONT_SIZE = TEXT_MEDIUM;
+    public static final int BG_DEFAULT_FONT_SIZE = TEXT_SMALL;
 
     public static class NoteBgResources {
         private final static int [] BG_EDIT_RESOURCES = new int [] {

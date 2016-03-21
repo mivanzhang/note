@@ -40,6 +40,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 
 public class BackupUtils {
@@ -47,6 +48,21 @@ public class BackupUtils {
     // Singleton stuff
     private static BackupUtils sInstance;
     private static Context mContext;
+    public static final String ROOT = "XM_NOTES";
+    public static final String FOLDER = "FOLDER";
+    public static final String FOLDER_NAME = "foldername";
+    public static final String NOTE = "NOTE";
+    public static final String CREATE_TIME = "createTime";
+    public static final String ALERT_TIME = "alertTime";
+    public static final String DESKTOPX = "desktopX";
+    public static final String FIX_TIME = "fixTime";
+    public static final String BGCOLORID = "bgcolorId";
+    public static final String FOLDERID = "folderId";
+    public static final String PHONENUMBER = "PHONENUMBER";
+    public static final String CALL_DATE = "CALL_DATE";
+    public static final String LOCALTION = "LOCALTION";
+    public static final String CONTENT = "content";
+    public static final String DEFAULT = "小米便签";
 
     public static synchronized BackupUtils getInstance(Context context) {
         mContext = context;
@@ -70,9 +86,7 @@ public class BackupUtils {
     public static final int STATE_SYSTEM_ERROR = 3;
     // Backup or restore success
     public static final int STATE_SUCCESS = 4;
-    public static final String DEFAULT = "小米便签";
     private TextExport mTextExport;
-
     private BackupUtils(Context context) {
         mTextExport = new TextExport(context);
     }
@@ -86,42 +100,6 @@ public class BackupUtils {
     }
 
     public int exportToXMl() {
-//        StringBuilder sb = new StringBuilder();
-//        sb.append(Environment.getExternalStorageDirectory().getAbsolutePath());
-//        sb.append(mContext.getString(R.string.file_path));
-//        sb.append(mContext.getString(
-//                R.string.format_date_ymd,
-//                DateFormat.format(mContext.getString(R.string.format_date_ymd),
-//                        System.currentTimeMillis())));
-//        sb.append(".xml");
-//        File file = new File(sb.toString());
-//        try {
-//            if (!file.exists()) {
-//                file.getParentFile().mkdirs();
-//                file.createNewFile();
-//            }
-//            FileOutputStream fileos = new FileOutputStream(file);
-//            XmlSerializer serializer = Xml.newSerializer();
-//            // we set the FileOutputStream as output for the serializer,
-//            // using UTF-8 encoding
-//            serializer.setOutput(fileos, "UTF-8");
-//            // <?xml version=”1.0″ encoding=”UTF-8″>
-//            // Write <?xml declaration with encoding (if encoding not
-//            // null) and standalone flag (if stan dalone not null)
-//            // This method can only be called just after setOutput.
-//            serializer.startDocument("UTF-8", null);
-//            // start a tag called "root"
-//            serializer.startTag(null, "root");
-//            serializer.startTag(null, "folder");
-//            serializer.text("root");
-//            serializer.endTag(null, "folder");
-////            serializer.endTag(null, "root");
-//            serializer.flush();
-//            fileos.close();
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//        return 1;
         return mTextExport.exportXML();
     }
 
@@ -139,14 +117,23 @@ public class BackupUtils {
                 NoteColumns.CREATED_DATE,
                 NoteColumns.SNIPPET,
                 NoteColumns.TYPE,
-                NoteColumns.MODIFIED_DATE
+                NoteColumns.MODIFIED_DATE,
+                NoteColumns.PARENT_ID,
+                NoteColumns.BG_COLOR_ID,
         };
 
         public static final int NOTE_COLUMN_ID = 0;
 
-        public static final int NOTE_COLUMN_MODIFIED_DATE = 1;
+        public static final int NOTE_COLUMN_CREATED_DATE = 1;
 
         public static final int NOTE_COLUMN_SNIPPET = 2;
+
+        public static final int NOTE_COLUMN_MODIFIED__DATE = 4;
+
+        public static final int NOTE_PARENT_ID = 5;
+
+        public static final int NOTE_BG_COLOR_ID = 6;
+
 
         public static final String[] DATA_PROJECTION = {
                 DataColumns.CONTENT,
@@ -170,16 +157,7 @@ public class BackupUtils {
         public static final int FORMAT_NOTE_DATE = 1;
         public static final int FORMAT_NOTE_CONTENT = 2;
 
-        public static final String ROOT = "ROOT";
-        public static final String FOLDER = "FOLDER";
-        public static final String FOLDER_NAME = "folder_name";
-        public static final String NOTE = "NOTE";
-        public static final String TIME = "TIME";
-        public static final String PHONENUMBER = "PHONENUMBER";
-        public static final String CALL_DATE = "CALL_DATE";
-        public static final String LOCALTION = "LOCALTION";
-        public static final String CONTENT = "CONTENT";
-        public static final String DEFAULT = "小米便签";
+
         private Context mContext;
         private String mFileName;
         private String mFileDirectory;
@@ -244,10 +222,10 @@ public class BackupUtils {
                                 ps.println(String.format(getFormat(FORMAT_NOTE_CONTENT),
                                         phoneNumber));
                             }
-                            // Print call date
-                            ps.println(String.format(getFormat(FORMAT_NOTE_CONTENT), DateFormat
-                                    .format(mContext.getString(R.string.format_datetime_mdhm),
-                                            callDate)));
+//                            // Print call date
+//                            ps.println(String.format(getFormat(FORMAT_NOTE_CONTENT), DateFormat
+//                                    .format(mContext.getString(R.string.format_datetime_mdhm),
+//                                            callDate)));
                             // Print call attachment location
                             if (!TextUtils.isEmpty(location)) {
                                 ps.println(String.format(getFormat(FORMAT_NOTE_CONTENT),
@@ -343,10 +321,25 @@ public class BackupUtils {
                 noteCursor.close();
             }
             ps.close();
-
+            shareFile(mContext);
             return STATE_SUCCESS;
         }
-
+        public static void shareFile(Context context) {
+            Uri uri=Uri.fromFile(generateFileMountedOnSDcard(context, R.string.file_path,
+                    R.string.file_name_txt_format));
+            Intent intent = new Intent(Intent.ACTION_SEND);
+            intent.putExtra("subject", ""); //
+            intent.putExtra("body", ""); // 正文
+            intent.putExtra(Intent.EXTRA_STREAM, uri); // 添加附件，附件为file对象
+            if (uri.toString().endsWith(".gz")) {
+                intent.setType("application/x-gzip"); // 如果是gz使用gzip的mime
+            } else if (uri.toString().endsWith(".txt")) {
+                intent.setType("text/plain"); // 纯文本则用text/plain的mime
+            } else {
+                intent.setType("application/octet-stream"); // 其他的均使用流当做二进制数据来发送
+            }
+            context.startActivity(intent); // 调用系统的mail客户端进行发送
+        }
         /**
          * Get a print stream pointed to the file {@generateExportedTextFile}
          */
@@ -380,6 +373,7 @@ public class BackupUtils {
                 Log.d(TAG, "Media was not mounted");
                 return STATE_SD_CARD_UNMOUONTED;
             }
+            ArrayList<String> foldIdList = new ArrayList<>();
             File file = generateFileMountedOnSDcard(mContext, R.string.file_path,
                     R.string.file_name_xml_format);
             try {
@@ -409,7 +403,8 @@ public class BackupUtils {
                             // Print folder's name
                             String folderName = "";
                             if (folderCursor.getLong(NOTE_COLUMN_ID) == Notes.ID_CALL_RECORD_FOLDER) {
-                                folderName = mContext.getString(R.string.call_record_folder_name);
+//                                folderName = mContext.getString(R.string.call_record_folder_name);
+                                continue;
                             } else {
                                 folderName = folderCursor.getString(NOTE_COLUMN_SNIPPET);
                             }
@@ -423,14 +418,15 @@ public class BackupUtils {
                                 serializer.text(folderName);
                                 serializer.endTag(null, FOLDER_NAME);
                             }
-                            exportFolderToXML(folderId, serializer);
                             serializer.endTag(null, FOLDER);
+                            foldIdList.add(folderId);
+
                         } while (folderCursor.moveToNext());
                     }
                     folderCursor.close();
                 }
 
-                // Export notes in root's folder
+//                // Export notes in root's folder
                 Cursor noteCursor = mContext.getContentResolver().query(
                         Notes.CONTENT_NOTE_URI,
                         NOTE_PROJECTION,
@@ -443,27 +439,45 @@ public class BackupUtils {
                 serializer.startTag(null, NoteColumns.ID);
                 serializer.text(String.valueOf(0));
                 serializer.endTag(null, NoteColumns.ID);
+                serializer.endTag(null, FOLDER);
+                for (String id : foldIdList) {
+                    exportFolderToXML(id, serializer);
+                }
                 if (noteCursor != null) {
                     if (noteCursor.moveToFirst()) {
                         do {
-                            String noteId = noteCursor.getString(NOTE_COLUMN_ID);
                             serializer.startTag(null, NOTE);
-                            serializer.startTag(null, TIME);
-                            serializer.text(String.format(getFormat(FORMAT_NOTE_DATE), DateFormat.format(
-                                    mContext.getString(R.string.format_datetime_mdhm),
-                                    noteCursor.getLong(NOTE_COLUMN_MODIFIED_DATE))));
-                            serializer.endTag(null, TIME);
+                            serializer.startTag(null, CREATE_TIME);
+                            serializer.text(String.valueOf(noteCursor.getLong(NOTE_COLUMN_CREATED_DATE)));
+                            serializer.endTag(null, CREATE_TIME);
+                            serializer.startTag(null, FIX_TIME);
+//                            serializer.text(String.format(getFormat(FORMAT_NOTE_DATE), DateFormat.format(
+//                                    mContext.getString(R.string.format_datetime_mdhm),
+//                                    noteCursor.getLong(NOTE_COLUMN_MODIFIED__DATE))));
+                            serializer.text(String.valueOf(noteCursor.getLong(NOTE_COLUMN_MODIFIED__DATE)));
+                            serializer.endTag(null, FIX_TIME);
+                            serializer.startTag(null, BGCOLORID);
+//                            serializer.text(String.valueOf(noteCursor.getLong(NOTE_BG_COLOR_ID)));
+                            serializer.text("1");
+                            serializer.endTag(null, BGCOLORID);
+
+                            serializer.startTag(null, FOLDERID);
+//                            serializer.text(String.valueOf(noteCursor.getLong(NOTE_PARENT_ID)));
+                            serializer.text("1");
+                            serializer.endTag(null, FOLDERID);
+                            // Query data belong to this note
+                            String noteId = noteCursor.getString(NOTE_COLUMN_ID);
                             exportNoteToXML(noteId, serializer);
                             serializer.endTag(null, NOTE);
                         } while (noteCursor.moveToNext());
                     }
                     noteCursor.close();
                 }
-                serializer.endTag(null, FOLDER);
                 serializer.endTag(null, ROOT);
                 serializer.flush();
                 //finally we close the file stream
                 fileos.close();
+                shareFile(mContext);
             } catch (Exception e) {
                 e.printStackTrace();
                 return STATE_SYSTEM_ERROR;
@@ -481,16 +495,32 @@ public class BackupUtils {
                 if (notesCursor != null) {
                     if (notesCursor.moveToFirst()) {
                         do {
-                            // Print note's last modified date
-
-                            serializer.startTag(null, NOTE);
-                            serializer.startTag(null, TIME);
-                            serializer.text(String.format(getFormat(FORMAT_NOTE_DATE), DateFormat.format(
-                                    mContext.getString(R.string.format_datetime_mdhm),
-                                    notesCursor.getLong(NOTE_COLUMN_MODIFIED_DATE))));
-                            serializer.endTag(null, TIME);
-                            // Query data belong to this note
                             String noteId = notesCursor.getString(NOTE_COLUMN_ID);
+                            if (noteId.length()>0&&Integer.valueOf(noteId) < 1) {
+                                continue;
+                            }
+                            serializer.startTag(null, NOTE);
+                            serializer.startTag(null, CREATE_TIME);
+                            serializer.text(String.valueOf(notesCursor.getLong(NOTE_COLUMN_CREATED_DATE)));
+                            serializer.endTag(null, CREATE_TIME);
+                            serializer.startTag(null, FIX_TIME);
+                            serializer.text(String.valueOf(notesCursor.getLong(NOTE_COLUMN_MODIFIED__DATE)));
+                            serializer.endTag(null, FIX_TIME);
+                            serializer.startTag(null, ALERT_TIME);
+                            serializer.text("0");
+                            serializer.endTag(null, ALERT_TIME);
+                            serializer.startTag(null, BGCOLORID);
+                            serializer.text("1");
+                            serializer.endTag(null, BGCOLORID);
+
+                            serializer.startTag(null, FOLDERID);
+                            serializer.text(String.valueOf(notesCursor.getLong(NOTE_PARENT_ID)));
+                            serializer.endTag(null, FOLDERID);
+                            serializer.startTag(null, DESKTOPX);
+                            serializer.text("0");
+                            serializer.endTag(null, DESKTOPX);
+                            // Query data belong to this note
+
                             exportNoteToXML(noteId, serializer);
                             serializer.endTag(null, NOTE);
                         } while (notesCursor.moveToNext());
@@ -593,7 +623,13 @@ public class BackupUtils {
         return null;
     }
 
-
+    public int getNoteTotalNumbers() {
+        Cursor numberCursor = mContext.getContentResolver().query(
+                Notes.CONTENT_NOTE_URI,
+                TextExport.NOTE_PROJECTION, null, null, null);
+//        numberCursor.moveToFirst();
+        return numberCursor.getCount();
+    }
 }
 
 

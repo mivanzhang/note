@@ -138,6 +138,7 @@
     <string name="no_backup_file">没有备份文件在</string>
     <string name="menu_import_text">导入文本</string>
     <string name="menu_import_xml">导入xml</string>
+    <string name="success_recover">导出成功</string>
     <plurals name="search_results_title">
         <item quantity="other"><xliff:g id="NUMBER">%1$s</xliff:g> 条符合“<xliff:g id="SEARCH">%2$s</xliff:g>”的搜索结果</item>
     </plurals>

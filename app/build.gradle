@@ -1,12 +1,12 @@
 apply plugin: 'com.android.application'
 android {
-    compileSdkVersion 21
+    compileSdkVersion 23
     buildToolsVersion "22.0.1"
 
     defaultConfig {
         applicationId "net.micode.notes"
         minSdkVersion 14
-        targetSdkVersion 14
+        targetSdkVersion 23
     }
 
     buildTypes {
@@ -15,10 +15,13 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+    useLibrary 'org.apache.http.legacy'
 }
-dependencies{
+dependencies {
     compile project(':AppLock')
-//    compile('com.meituan.android.hydra:multidex:0.0.1-SNAPSHOT@aar') {
-//        transitive = true
-//    }
+    //    compile('com.meituan.android.hydra:multidex:0.0.1-SNAPSHOT@aar') {
+
+    //        transitive = true
+
+    //    }
 }

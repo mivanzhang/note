@@ -148,9 +148,8 @@
     <string name="backup">backup</string>
     <string name="reset_passport">enable/disable  passport</string>
     <string name="modify_passport">modify  passport</string>
+    <string name="success_recover">recover   successfuly</string>
     <string name="no_backup_file">no  backup  file in  </string>
-
-
     <plurals name="search_results_title">
          <item quantity="one"><xliff:g id="number" example="1">%1$s</xliff:g> result for \"<xliff:g id="search" example="???">%2$s</xliff:g>\"</item>
         <!-- Case of 0 or 2 or more results. -->

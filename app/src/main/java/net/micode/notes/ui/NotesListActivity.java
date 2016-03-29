@@ -71,6 +71,7 @@ import net.micode.notes.model.BackupNoteInfo;
 import net.micode.notes.model.WorkingNote;
 import net.micode.notes.tool.BackupUtils;
 import net.micode.notes.tool.DataUtils;
+import net.micode.notes.tool.RSAUtils;
 import net.micode.notes.tool.ResourceParser;
 import net.micode.notes.ui.NotesListAdapter.AppWidgetAttribute;
 import net.micode.notes.widget.NoteWidgetProvider_2x;
@@ -368,24 +369,25 @@ public class NotesListActivity extends BaseActivity implements OnClickListener, 
         }
         try {
             content.append(readBuffer);
+//            String noteText = RSAUtils.decrypt(content.toString());
 //            int folderID =  BackupUtils.getInstance(this).getNoteTotalNumbers();
             int folderID = 2;
-            String cata[] = content.toString().split("----------------");
+            String cata[] = content.toString().split(("----------------"));
             for (int cout = 1; cout < cata.length; cout++) {
                 if (cout % 2 == 1) {
-                    folderName = cata[cout].trim();
+                    folderName = RSAUtils.decrypt(cata[cout].trim());
                     if (!BackupUtils.DEFAULT.equals(folderName)) {
-                        createdFoldlerID(cata[cout].trim(), String.valueOf(folderID));
+                        createdFoldlerID(RSAUtils.decrypt(cata[cout].trim()), String.valueOf(folderID));
                     }
                     continue;
                 }
-                String result[] = cata[cout].toString().split("(\r\n){2,}");
+                String result[] = (cata[cout].toString().split("(\r\n){2,}"));
                 if (BackupUtils.DEFAULT.equals(folderName)) {
                     for (int j = result.length - 1; j >= 0; j--) {
                         WorkingNote note = WorkingNote.createEmptyNote(this, Notes.ID_ROOT_FOLDER,
                                 AppWidgetManager.INVALID_APPWIDGET_ID, Notes.TYPE_WIDGET_INVALIDE,
                                 ResourceParser.YELLOW);
-                        note.setWorkingText(result[j].trim());
+                        note.setWorkingText(RSAUtils.decrypt(result[j].trim()));
                         note.saveNote();
                     }
                     continue;
@@ -394,7 +396,7 @@ public class NotesListActivity extends BaseActivity implements OnClickListener, 
                     WorkingNote note = WorkingNote.createEmptyNote(NotesListActivity.this, folderID,
                             AppWidgetManager.INVALID_APPWIDGET_ID, Notes.TYPE_WIDGET_INVALIDE,
                             ResourceParser.YELLOW);
-                    note.setWorkingText(result[j].trim());
+                    note.setWorkingText(RSAUtils.decrypt(result[j].trim()));
                     note.saveNote();
 
                 }

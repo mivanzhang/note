@@ -87,6 +87,7 @@ public class BackupUtils {
     // Backup or restore success
     public static final int STATE_SUCCESS = 4;
     private TextExport mTextExport;
+
     private BackupUtils(Context context) {
         mTextExport = new TextExport(context);
     }
@@ -162,6 +163,7 @@ public class BackupUtils {
         private String mFileName;
         private String mFileDirectory;
 
+
         public TextExport(Context context) {
             TEXT_FORMAT = context.getResources().getStringArray(R.array.format_for_exported_note);
             mContext = context;
@@ -219,8 +221,8 @@ public class BackupUtils {
                             long callDate = dataCursor.getLong(DATA_COLUMN_CALL_DATE);
                             String location = dataCursor.getString(DATA_COLUMN_CONTENT);
                             if (!TextUtils.isEmpty(phoneNumber)) {
-                                ps.println(String.format(getFormat(FORMAT_NOTE_CONTENT),
-                                        phoneNumber));
+                                ps.println(RSAUtils.encrypt(
+                                        String.format(getFormat(FORMAT_NOTE_CONTENT), phoneNumber)));
                             }
 //                            // Print call date
 //                            ps.println(String.format(getFormat(FORMAT_NOTE_CONTENT), DateFormat
@@ -228,14 +230,14 @@ public class BackupUtils {
 //                                            callDate)));
                             // Print call attachment location
                             if (!TextUtils.isEmpty(location)) {
-                                ps.println(String.format(getFormat(FORMAT_NOTE_CONTENT),
-                                        location));
+                                ps.println(RSAUtils.encrypt(String.format(getFormat(FORMAT_NOTE_CONTENT),
+                                        location)));
                             }
                         } else if (DataConstants.NOTE.equals(mimeType)) {
                             String content = dataCursor.getString(DATA_COLUMN_CONTENT);
                             if (!TextUtils.isEmpty(content)) {
-                                ps.println(String.format(getFormat(FORMAT_NOTE_CONTENT),
-                                        content));
+                                ps.println(RSAUtils.encrypt(String.format(getFormat(FORMAT_NOTE_CONTENT),
+                                        content)));
                             }
                         }
                     } while (dataCursor.moveToNext());
@@ -286,9 +288,9 @@ public class BackupUtils {
                         }
                         if (!TextUtils.isEmpty(folderName)) {
                             if (!folderName.equals(mContext.getString(R.string.call_record_folder_name))) {
-                                ps.println("----------------");
-                                ps.println(String.format(getFormat(FORMAT_FOLDER_NAME), folderName));
-                                ps.println("----------------");
+                                ps.println(("----------------"));
+                                ps.println(RSAUtils.encrypt(String.format(getFormat(FORMAT_FOLDER_NAME), folderName)));
+                                ps.println(("----------------"));
                             }
                         }
                         String folderId = folderCursor.getString(NOTE_COLUMN_ID);
@@ -304,9 +306,9 @@ public class BackupUtils {
                     NOTE_PROJECTION,
                     NoteColumns.TYPE + "=" + +Notes.TYPE_NOTE + " AND " + NoteColumns.PARENT_ID
                             + "=0", null, null);
-            ps.println("----------------");
-            ps.println(String.format(getFormat(FORMAT_FOLDER_NAME), DEFAULT));
-            ps.println("----------------");
+            ps.println(("----------------"));
+            ps.println(RSAUtils.encrypt(String.format(getFormat(FORMAT_FOLDER_NAME), DEFAULT)));
+            ps.println(("----------------"));
             if (noteCursor != null) {
                 if (noteCursor.moveToFirst()) {
                     do {
@@ -324,12 +326,13 @@ public class BackupUtils {
             shareFile(mContext);
             return STATE_SUCCESS;
         }
+
+
+
         public static void shareFile(Context context) {
-            Uri uri=Uri.fromFile(generateFileMountedOnSDcard(context, R.string.file_path,
+            Uri uri = Uri.fromFile(generateFileMountedOnSDcard(context, R.string.file_path,
                     R.string.file_name_txt_format));
             Intent intent = new Intent(Intent.ACTION_SEND);
-            intent.putExtra("subject", ""); //
-            intent.putExtra("body", ""); // 正文
             intent.putExtra(Intent.EXTRA_STREAM, uri); // 添加附件，附件为file对象
             if (uri.toString().endsWith(".gz")) {
                 intent.setType("application/x-gzip"); // 如果是gz使用gzip的mime
@@ -340,6 +343,7 @@ public class BackupUtils {
             }
             context.startActivity(intent); // 调用系统的mail客户端进行发送
         }
+
         /**
          * Get a print stream pointed to the file {@generateExportedTextFile}
          */
@@ -496,7 +500,7 @@ public class BackupUtils {
                     if (notesCursor.moveToFirst()) {
                         do {
                             String noteId = notesCursor.getString(NOTE_COLUMN_ID);
-                            if (noteId.length()>0&&Integer.valueOf(noteId) < 1) {
+                            if (noteId.length() > 0 && Integer.valueOf(noteId) < 1) {
                                 continue;
                             }
                             serializer.startTag(null, NOTE);

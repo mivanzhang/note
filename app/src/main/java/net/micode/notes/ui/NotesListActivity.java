@@ -68,6 +68,7 @@ import net.micode.notes.data.Notes.NoteColumns;
 import net.micode.notes.model.BackupFolderInfo;
 import net.micode.notes.model.BackupNoteInfo;
 import net.micode.notes.model.WorkingNote;
+import net.micode.notes.tool.AlarmManagerUtil;
 import net.micode.notes.tool.BackupUtils;
 import net.micode.notes.tool.DataUtils;
 import net.micode.notes.tool.RSAUtils;
@@ -372,7 +373,7 @@ public class NotesListActivity extends BaseActivity implements OnClickListener, 
 //            int folderID =  BackupUtils.getInstance(this).getNoteTotalNumbers();
             int folderID = 2;
             String cata[] = content.toString().split(("----------------"));
-            for (int cout = 1; cout <cata.length ; cout++) {
+            for (int cout = 1; cout < cata.length; cout++) {
 //            for (int cout = cata.length-1; cout >0 ; cout--) {
                 if (cout % 2 == 1) {
                     folderName = RSAUtils.decrypt(cata[cout].trim());
@@ -931,8 +932,21 @@ public class NotesListActivity extends BaseActivity implements OnClickListener, 
             default:
                 break;
         }
+        if (isBackup) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    isBackup = false;
+                    AlarmManagerUtil.sendUpdateBroadcastRepeat(NotesListActivity.this);
+                    BackupUtils.getInstance(NotesListActivity.this).exportToXMl(false);
+                    BackupUtils.getInstance(NotesListActivity.this).exportToText(false);
+                }
+            }).start();
 
+        }
     }
+
+    private static boolean isBackup = true;
 
     private void updateWidget(int appWidgetId, int appWidgetType) {
         Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE);

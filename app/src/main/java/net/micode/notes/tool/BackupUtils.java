@@ -63,7 +63,8 @@ public class BackupUtils {
     public static final String LOCALTION = "LOCALTION";
     public static final String CONTENT = "content";
     public static final String DEFAULT = "木兮便签";
-    public static final String SORT_ORDER = NoteColumns.ID+" DESC";
+    //    public static final String SORT_ORDER = NoteColumns.ID+" DESC";
+    public static final String SORT_ORDER = null;
 
     public static synchronized BackupUtils getInstance(Context context) {
         mContext = context;
@@ -275,7 +276,7 @@ public class BackupUtils {
                     NOTE_PROJECTION,
                     "(" + NoteColumns.TYPE + "=" + Notes.TYPE_FOLDER + " AND "
                             + NoteColumns.PARENT_ID + "<>" + Notes.ID_TRASH_FOLER + ") OR "
-                            + NoteColumns.ID + "=" + Notes.ID_CALL_RECORD_FOLDER, null,SORT_ORDER);
+                            + NoteColumns.ID + "=" + Notes.ID_CALL_RECORD_FOLDER, null, SORT_ORDER);
 
             if (folderCursor != null) {
                 if (folderCursor.moveToFirst()) {

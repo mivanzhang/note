@@ -2,6 +2,9 @@ package net.micode.notes.application;
 
 import android.app.Application;
 
+import net.micode.notes.tool.AlarmManagerUtil;
+import net.micode.notes.tool.BackupUtils;
+
 import me.dawson.applock.core.LockManager;
 
 /**
@@ -13,7 +16,21 @@ public class BaseApplication extends Application {
     public void onCreate() {
         super.onCreate();
         LockManager.getInstance().enableAppLock(this);
+        if(isBackup){
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    isBackup=false;
+                    AlarmManagerUtil.sendUpdateBroadcastRepeat(BaseApplication.this);
+                    BackupUtils.getInstance(BaseApplication.this).exportToXMl(false);
+                    BackupUtils.getInstance(BaseApplication.this).exportToText(false);
+                }
+            }).start();
+
+        }
     }
+    private static boolean isBackup=true;
+
 //    private static final ArrayList<String> activityList = new ArrayList<>();
 //    private boolean lcokStatus = true;
 //    private boolean isUnlock = false;

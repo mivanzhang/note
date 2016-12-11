@@ -65,7 +65,6 @@ import android.widget.Toast;
 import net.micode.notes.R;
 import net.micode.notes.data.Notes;
 import net.micode.notes.data.Notes.NoteColumns;
-import net.micode.notes.gtask.remote.GTaskSyncService;
 import net.micode.notes.model.BackupFolderInfo;
 import net.micode.notes.model.BackupNoteInfo;
 import net.micode.notes.model.WorkingNote;
@@ -373,7 +372,8 @@ public class NotesListActivity extends BaseActivity implements OnClickListener, 
 //            int folderID =  BackupUtils.getInstance(this).getNoteTotalNumbers();
             int folderID = 2;
             String cata[] = content.toString().split(("----------------"));
-            for (int cout = 1; cout < cata.length; cout++) {
+            for (int cout = 1; cout <cata.length ; cout++) {
+//            for (int cout = cata.length-1; cout >0 ; cout--) {
                 if (cout % 2 == 1) {
                     folderName = RSAUtils.decrypt(cata[cout].trim());
                     if (!BackupUtils.DEFAULT.equals(folderName)) {
@@ -420,6 +420,7 @@ public class NotesListActivity extends BaseActivity implements OnClickListener, 
     protected void onStart() {
         super.onStart();
         startAsyncNotesListQuery();
+
     }
 
     private void initResources() {
@@ -452,6 +453,12 @@ public class NotesListActivity extends BaseActivity implements OnClickListener, 
         public boolean onCreateActionMode(ActionMode mode, Menu menu) {
             getMenuInflater().inflate(R.menu.note_list_options, menu);
             menu.findItem(R.id.delete).setOnMenuItemClickListener(this);
+            menu.findItem(R.id.menu_new_folder).setOnMenuItemClickListener(this);
+            menu.findItem(R.id.menu_setting).setOnMenuItemClickListener(this);
+            menu.findItem(R.id.menu_search).setOnMenuItemClickListener(this);
+            menu.findItem(R.id.menu_backup).setOnMenuItemClickListener(this);
+            menu.findItem(R.id.menu_recover).setOnMenuItemClickListener(this);
+            menu.findItem(R.id.menu_lock).setOnMenuItemClickListener(this);
             mMoveMenu = menu.findItem(R.id.move);
             if (mFocusNoteDataItem.getParentId() == Notes.ID_CALL_RECORD_FOLDER
                     || DataUtils.getUserFolderCount(mContentResolver) == 0) {
@@ -527,11 +534,6 @@ public class NotesListActivity extends BaseActivity implements OnClickListener, 
         }
 
         public boolean onMenuItemClick(MenuItem item) {
-            if (mNotesListAdapter.getSelectedCount() == 0) {
-                Toast.makeText(NotesListActivity.this, getString(R.string.menu_select_none),
-                        Toast.LENGTH_SHORT).show();
-                return true;
-            }
 
             switch (item.getItemId()) {
                 case R.id.delete:
@@ -551,7 +553,36 @@ public class NotesListActivity extends BaseActivity implements OnClickListener, 
                     builder.show();
                     break;
                 case R.id.move:
+                    if (mNotesListAdapter.getSelectedCount() == 0) {
+                        Toast.makeText(NotesListActivity.this, getString(R.string.menu_select_none),
+                                Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
                     startQueryDestinationFolders();
+                    break;
+                case R.id.menu_new_folder: {
+                    showCreateOrModifyFolderDialog(true);
+                    break;
+                }
+                case R.id.menu_setting: {
+                    startPreferenceActivity();
+                    break;
+                }
+                case R.id.menu_new_note: {
+                    createNewNote();
+                    break;
+                }
+                case R.id.menu_search:
+                    onSearchRequested();
+                    break;
+                case R.id.menu_backup:
+                    backUp();
+                    break;
+                case R.id.menu_recover:
+                    recover();
+                    break;
+                case R.id.menu_lock:
+                    lock();
                     break;
                 default:
                     return false;
@@ -900,6 +931,7 @@ public class NotesListActivity extends BaseActivity implements OnClickListener, 
             default:
                 break;
         }
+
     }
 
     private void updateWidget(int appWidgetId, int appWidgetType) {
@@ -980,8 +1012,6 @@ public class NotesListActivity extends BaseActivity implements OnClickListener, 
         if (mState == ListEditState.NOTE_LIST) {
             getMenuInflater().inflate(R.menu.note_list, menu);
             // set sync or sync_cancel
-            menu.findItem(R.id.menu_sync).setTitle(
-                    GTaskSyncService.isSyncing() ? R.string.menu_sync_cancel : R.string.menu_sync);
         } else if (mState == ListEditState.SUB_FOLDER) {
 //            getMenuInflater().inflate(R.menu.sub_folder, menu);
             getMenuInflater().inflate(R.menu.note_list, menu);
@@ -1009,18 +1039,6 @@ public class NotesListActivity extends BaseActivity implements OnClickListener, 
         switch (item.getItemId()) {
             case R.id.menu_new_folder: {
                 showCreateOrModifyFolderDialog(true);
-                break;
-            }
-            case R.id.menu_sync: {
-                if (isSyncMode()) {
-                    if (TextUtils.equals(item.getTitle(), getString(R.string.menu_sync))) {
-                        GTaskSyncService.startSync(this);
-                    } else {
-                        GTaskSyncService.cancelSync(this);
-                    }
-                } else {
-                    startPreferenceActivity();
-                }
                 break;
             }
             case R.id.menu_setting: {
@@ -1122,9 +1140,9 @@ public class NotesListActivity extends BaseActivity implements OnClickListener, 
             @Override
             protected Integer doInBackground(Void... unused) {
                 if (isXML) {
-                    backup.exportToXMl();
+                    backup.exportToXMl(true);
                 }
-                return backup.exportToText();
+                return backup.exportToText(true);
             }
 
             @Override

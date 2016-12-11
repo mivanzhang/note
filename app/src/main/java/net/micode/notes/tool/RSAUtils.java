@@ -11,7 +11,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 public class RSAUtils extends Activity {
-    private static String seed = "122344";
+    private static String seed = "mivanzhang110615";
     public static boolean isEncrypt = true;
 
     public static String encrypt(String seed, String cleartext) throws Exception {

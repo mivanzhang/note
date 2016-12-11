@@ -16,9 +16,7 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="net.micode.notes"
-    android:versionCode="1"
-    android:versionName="0.1">
+    package="net.micode.notes">
 
     <uses-sdk android:minSdkVersion="14" />
     <uses-sdk android:targetSdkVersion="22" />
@@ -117,15 +115,10 @@
                 android:resource="@xml/widget_4x_info" />
         </receiver>
 
-        <receiver android:name=".ui.AlarmInitReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
+        <receiver android:name="net.micode.notes.tool.BackUpReceiver">
+
         </receiver>
 
-        <receiver
-            android:name="net.micode.notes.ui.AlarmReceiver"
-            android:process=":remote"></receiver>
 
         <activity
             android:name=".ui.AlarmAlertActivity"

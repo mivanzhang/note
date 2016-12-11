@@ -62,7 +62,8 @@ public class BackupUtils {
     public static final String CALL_DATE = "CALL_DATE";
     public static final String LOCALTION = "LOCALTION";
     public static final String CONTENT = "content";
-    public static final String DEFAULT = "小米便签";
+    public static final String DEFAULT = "木兮便签";
+    public static final String SORT_ORDER = NoteColumns.ID+" DESC";
 
     public static synchronized BackupUtils getInstance(Context context) {
         mContext = context;
@@ -96,12 +97,12 @@ public class BackupUtils {
         return Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState());
     }
 
-    public int exportToText() {
-        return mTextExport.exportToText();
+    public int exportToText(boolean isShare) {
+        return mTextExport.exportToText(isShare);
     }
 
-    public int exportToXMl() {
-        return mTextExport.exportXML();
+    public int exportToXMl(boolean isShare) {
+        return mTextExport.exportXML(isShare);
     }
 
     public String getExportedTextFileName() {
@@ -183,7 +184,7 @@ public class BackupUtils {
             Cursor notesCursor = mContext.getContentResolver().query(Notes.CONTENT_NOTE_URI,
                     NOTE_PROJECTION, NoteColumns.PARENT_ID + "=?", new String[]{
                             folderId
-                    }, null);
+                    }, SORT_ORDER);
 
             if (notesCursor != null) {
                 if (notesCursor.moveToFirst()) {
@@ -208,7 +209,7 @@ public class BackupUtils {
             Cursor dataCursor = mContext.getContentResolver().query(Notes.CONTENT_DATA_URI,
                     DATA_PROJECTION, DataColumns.NOTE_ID + "=?", new String[]{
                             noteId
-                    }, null);
+                    }, SORT_ORDER);
 
             if (dataCursor != null) {
                 if (dataCursor.moveToFirst()) {
@@ -257,7 +258,7 @@ public class BackupUtils {
         /**
          * Note will be exported as text which is user readable
          */
-        public int exportToText() {
+        public int exportToText(boolean isShare) {
             if (!externalStorageAvailable()) {
                 Log.d(TAG, "Media was not mounted");
                 return STATE_SD_CARD_UNMOUONTED;
@@ -274,7 +275,7 @@ public class BackupUtils {
                     NOTE_PROJECTION,
                     "(" + NoteColumns.TYPE + "=" + Notes.TYPE_FOLDER + " AND "
                             + NoteColumns.PARENT_ID + "<>" + Notes.ID_TRASH_FOLER + ") OR "
-                            + NoteColumns.ID + "=" + Notes.ID_CALL_RECORD_FOLDER, null, null);
+                            + NoteColumns.ID + "=" + Notes.ID_CALL_RECORD_FOLDER, null,SORT_ORDER);
 
             if (folderCursor != null) {
                 if (folderCursor.moveToFirst()) {
@@ -323,10 +324,10 @@ public class BackupUtils {
                 noteCursor.close();
             }
             ps.close();
-            shareFile(mContext);
+            if (isShare)
+                shareFile(mContext);
             return STATE_SUCCESS;
         }
-
 
 
         public static void shareFile(Context context) {
@@ -372,7 +373,7 @@ public class BackupUtils {
             return ps;
         }
 
-        public int exportXML() {
+        public int exportXML(boolean isShare) {
             if (!externalStorageAvailable()) {
                 Log.d(TAG, "Media was not mounted");
                 return STATE_SD_CARD_UNMOUONTED;
@@ -399,7 +400,7 @@ public class BackupUtils {
                         NOTE_PROJECTION,
                         "(" + NoteColumns.TYPE + "=" + Notes.TYPE_FOLDER + " AND "
                                 + NoteColumns.PARENT_ID + "<>" + Notes.ID_TRASH_FOLER + ") OR "
-                                + NoteColumns.ID + "=" + Notes.ID_CALL_RECORD_FOLDER, null, null);
+                                + NoteColumns.ID + "=" + Notes.ID_CALL_RECORD_FOLDER, null, SORT_ORDER);
 
                 if (folderCursor != null) {
                     if (folderCursor.moveToFirst()) {
@@ -435,7 +436,7 @@ public class BackupUtils {
                         Notes.CONTENT_NOTE_URI,
                         NOTE_PROJECTION,
                         NoteColumns.TYPE + "=" + +Notes.TYPE_NOTE + " AND " + NoteColumns.PARENT_ID
-                                + "=0", null, null);
+                                + "=0", null, SORT_ORDER);
                 serializer.startTag(null, FOLDER);
                 serializer.startTag(null, FOLDER_NAME);
                 serializer.text(DEFAULT);
@@ -481,7 +482,8 @@ public class BackupUtils {
                 serializer.flush();
                 //finally we close the file stream
                 fileos.close();
-                shareFile(mContext);
+                if (isShare)
+                    shareFile(mContext);
             } catch (Exception e) {
                 e.printStackTrace();
                 return STATE_SYSTEM_ERROR;
@@ -494,7 +496,7 @@ public class BackupUtils {
             Cursor notesCursor = mContext.getContentResolver().query(Notes.CONTENT_NOTE_URI,
                     NOTE_PROJECTION, NoteColumns.PARENT_ID + "=?", new String[]{
                             folderId
-                    }, null);
+                    }, SORT_ORDER);
             try {
                 if (notesCursor != null) {
                     if (notesCursor.moveToFirst()) {
@@ -543,7 +545,7 @@ public class BackupUtils {
             Cursor dataCursor = mContext.getContentResolver().query(Notes.CONTENT_DATA_URI,
                     DATA_PROJECTION, DataColumns.NOTE_ID + "=?", new String[]{
                             noteId
-                    }, null);
+                    }, SORT_ORDER);
 
             if (dataCursor != null) {
                 if (dataCursor.moveToFirst()) {
